@@ -1,6 +1,6 @@
-const size = 9;
-const board = [];
-let currentPlayer = 'black';
+const size = 9; // اندازه تخته بازی
+const board = []; // ذخیره وضعیت تخته
+let currentPlayer = 'black'; // بازیکن جاری
 
 // ایجاد تخته و سلول‌ها
 function createBoard() {
@@ -14,60 +14,101 @@ function createBoard() {
             cell.dataset.col = j;
             cell.addEventListener('click', placeStone);
             boardElement.appendChild(cell);
-            board[i][j] = null;
+            board[i][j] = null; // مقداردهی اولیه تخته
         }
     }
 }
 
 // قرار دادن مهره
 function placeStone(event) {
-    const row = event.target.dataset.row;
-    const col = event.target.dataset.col;
+    const row = parseInt(event.target.dataset.row);
+    const col = parseInt(event.target.dataset.col);
 
-    if (!board[row][col]) {
-        const stone = document.createElement('div');
-        stone.classList.add('stone', currentPlayer);
-        event.target.appendChild(stone);
+    if (!board[row][col]) { // بررسی اینکه خانه خالی باشد
         board[row][col] = currentPlayer;
+        renderBoard();
 
-        if (checkCapture(parseInt(row), parseInt(col))) {
-            captureStones(parseInt(row), parseInt(col));
+        if (checkCapture(row, col)) {
+            removeCapturedStones();
         }
 
-        currentPlayer = currentPlayer === 'black' ? 'white' : 'black';
+        currentPlayer = currentPlayer === 'black' ? 'white' : 'black'; // تغییر نوبت
     }
 }
 
-// بررسی محاصره
+// رسم تخته بازی
+function renderBoard() {
+    const cells = document.querySelectorAll('.cell');
+    cells.forEach(cell => {
+        const row = parseInt(cell.dataset.row);
+        const col = parseInt(cell.dataset.col);
+        cell.innerHTML = '';
+
+        if (board[row][col]) {
+            const stone = document.createElement('div');
+            stone.classList.add('stone', board[row][col]);
+            cell.appendChild(stone);
+        }
+    });
+}
+
+// بررسی محاصره مهره‌ها
 function checkCapture(row, col) {
     const opponent = currentPlayer === 'black' ? 'white' : 'black';
-    return (
-        checkDirection(row - 1, col, opponent) ||
-        checkDirection(row + 1, col, opponent) ||
-        checkDirection(row, col - 1, opponent) ||
-        checkDirection(row, col + 1, opponent)
-    );
+    const capturedGroups = [];
+
+    [[row - 1, col], [row + 1, col], [row, col - 1], [row, col + 1]].forEach(([r, c]) => {
+        if (r >= 0 && r < size && c >= 0 && c < size && board[r][c] === opponent) {
+            const group = getGroup(r, c);
+            if (group.liberties === 0) {
+                capturedGroups.push(group.stones);
+            }
+        }
+    });
+
+    if (capturedGroups.length > 0) {
+        capturedStones = capturedGroups.flat();
+        return true;
+    }
+
+    return false;
 }
 
-function checkDirection(row, col, opponent) {
-    if (row < 0 || row >= size || col < 0 || col >= size) return false;
-    return board[row][col] === opponent;
+// یافتن گروه مهره‌های متصل و شمارش خطوط آزادی
+function getGroup(row, col) {
+    const color = board[row][col];
+    const visited = [];
+    const stones = [];
+    let liberties = 0;
+
+    function explore(r, c) {
+        if (r < 0 || r >= size || c < 0 || c >= size) return;
+        if (visited.includes(`${r},${c}`)) return;
+
+        visited.push(`${r},${c}`);
+
+        if (board[r][c] === color) {
+            stones.push([r, c]);
+            [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].forEach(([nr, nc]) => explore(nr, nc));
+        } else if (!board[r][c]) {
+            liberties++;
+        }
+    }
+
+    explore(row, col);
+    return { stones, liberties };
 }
 
-// گرفتن مهره‌های محاصره شده
-function captureStones(row, col) {
-    const opponent = currentPlayer === 'black' ? 'white' : 'black';
-    if (checkDirection(row - 1, col, opponent)) removeStone(row - 1, col);
-    if (checkDirection(row + 1, col, opponent)) removeStone(row + 1, col);
-    if (checkDirection(row, col - 1, opponent)) removeStone(row, col - 1);
-    if (checkDirection(row, col + 1, opponent)) removeStone(row, col + 1);
+// حذف مهره‌های محاصره‌شده
+function removeCapturedStones() {
+    capturedStones.forEach(([r, c]) => {
+        board[r][c] = null;
+    });
+    capturedStones = [];
+    renderBoard();
 }
 
-function removeStone(row, col) {
-    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-    cell.innerHTML = '';
-    board[row][col] = null;
-}
+let capturedStones = [];
 
 // شروع بازی
 createBoard();
