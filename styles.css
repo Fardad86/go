@@ -23,10 +23,25 @@ label {
     padding: 5px;
 }
 
+#passButton {
+    margin: 10px;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#passButton:hover {
+    background-color: #45a049;
+}
+
 #board {
     display: grid;
     margin-top: 20px;
     background-color: #b88b4f; /* رنگ بورد واقعی‌تر */
+    position: relative;
 }
 
 .cell {
@@ -59,6 +74,27 @@ label {
 .white {
     background-color: #fff;
     border: 1px solid #000;
+}
+
+.grid-line {
+    position: absolute;
+    background-color: #333;
+    z-index: 1;
+}
+
+.grid-line.horizontal {
+    width: 100%;
+    height: 1px;
+}
+
+.grid-line.vertical {
+    height: 100%;
+    width: 1px;
+}
+
+#status {
+    margin-top: 20px;
+    color: #fff;
 }
 
 
